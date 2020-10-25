@@ -1,6 +1,6 @@
 const Discord = require("discord.js")
 const bot = new Discord.Client()
-const config = require("./c0nfig.json")
+const config = require("./config.json")
 
 bot.login(config.token)
 
@@ -8,7 +8,7 @@ bot.login(config.token)
 bot.on("ready", () => {
     console.log("Ready")
     bot.user.setStatus("online")
-    bot.user.setActivity('Wersja beta 0.3')
+    bot.user.setActivity("+help")
 });
 
 bot.on("reconnecting", () => {
@@ -32,54 +32,128 @@ bot.on("message", message => {
     const args = message.content.slice(config.prefix.length).trim().split(/ +/g);
     const command = args.shift().toLowerCase()
 
+    if (command === "help") {
+        const fayer = bot.users.get("767516970769055745")
+        const helpEmbed = new Discord.RichEmbed()
+            .setTitle(`My commands list | prefix \`${config.prefix}\``)
+            .addField("``ping``", "Your basic ping pong command")
+            .addField("``uptime``", "Seeing the bot's uptime")
+            .addField("``kick``", "Kicks the user mentioned, you know, use it whenever needed")
+            .addField("``ban``", "Bans the user mentioned, be careful with the ban hammer, it is heavy")
+            .addField("``mute``", "Finally shuts up that annoying user.")
+            .addField("``unmute``", "Unsilence the annoying user")
+            .addField("``add``", "Adds role to a user, hooray :tada:")
+            .addField("``remove``", "Removes role from user, sadface")
+            .addField("``rps``", "a basic rock paper scissors commands, no cheating!")
+            .setThumbnail(bot.avatarURL)
+            .setColor("#020101")
+        message.channel.send(helpEmbed)
+
+    }
+
     if (command === "kick") {
         if (!message.member.hasPermission('KICK_MEMBERS'))
-            return message.channel.send(":no_entry: Niewystarczające uprawnienia")
+            return message.channel.send(":no_entry: Insufficient permissions")
         const member = message.mentions.members.first();
         if (!member)
-            return message.channel.send(":no_entry: Nie wymieniono żadnego użytkownika.")
+            return message.channel.send(":no_entry: No user mentioned.")
         const reason = args.slice(1).join(" ") 
         if (!member.kickable)
-            return message.channel.send(":no_entry: Nie mogę wyrzucić tego użytkownika.")
+            return message.channel.send(":no_entry: I cannot kick this user.")
         if (member) {
             if (!reason) {
                 return member.kick().then(member => {
-                    message.channel.send(`${member.user.tag} został wyrzucony przez ${message.author}, nie podano powodu.`);
+                    message.channel.send(`${member.user.tag} was kicked by ${message.author}, no reason was provided.`);
                 })
             }
             if (reason) {
                 member.kick().then(member => {
-                    message.channel.send(`${member.user.tag} został wyrzucony przez ${message.author} ponieważ ${reason}.`);
+                    message.channel.send(`${member.user.tag} was kicked by ${message.author}, no reason was provided.`);
                 })
             }
         }
     }
-    if (command === "plg") {
-    	return message.channel.send("Polska Górą!!!")
-    }
     if (command === "ban") {
         if (!message.member.hasPermission('BAN_MEMBERS'))
-            return message.channel.send(":no_entry: Niewystarczające uprawnienia")
+            return message.channel.send(":no_entry: Insufficient permissions")
         const member = message.mentions.members.first();
         if (!member)
-            return message.channel.send(":no_entry: Niewystarczające uprawnienia.")
+            return message.channel.send(":no_entry: No user mentioned.")
         const reason = args.slice(1).join(" ")
         if (!member.kickable)
-            return message.channel.send(":no_entry: Nie mogę zablokować tego użytkownika.")
+            return message.channel.send(":no_entry: I cannot ban this user.")
         if (member) {
             if (!reason) {
                 return member.ban().then(member => {
-                    message.channel.send(`${member.user.tag} został zbanowany przez ${message.author}, nie podano powodu.`)
+                    message.channel.send(`${member.user.tag} was banned by ${message.author}, no reason was provided.`)
                 })
             }
             if (reason) {
                 member.ban().then(member => {
-                    message.channel.send(`${member.user.tag} został zbanowany przez ${message.author} ponieważ ${reason}.`)
+                    message.channel.send(`${member.user.tag} was banned by ${message.author} for ${reason}.`)
                 })
             }
         }
     }
 
+    if (command === "mute") {
+        if (!message.member.hasPermission('MANAGE_MESSAGES'))
+            return message.channel.send(":no_entry: Insufficient permissions")
+        const mute = message.guild.roles.find(r => r.name === "Muted");
+        message.guild.channels.forEach(channel => {
+            channel.overwritePermissions(mute, { SEND_MESSAGES: false })
+        })
+        if (!mute)
+            return message.channel.send(":no_entry: No mute role")
+        const member = message.mentions.members.first();
+        if (!member)
+            return message.channel.send(":no_entry: No user mentioned")
+        if (member.roles.some(r => ["Muted"].includes(r.name)))
+            return message.channel.send(":no_entry: User is already muted")
+        if (member.id === message.author.id) {
+            return message.channel.send("I know you'd find it funny to mute yourself but sorry, no can do")
+        }
+        if (member.id === bot.user.id) {
+            return message.channel.send("Very funny")
+        }
+        const reason = args.slice(1).join(" ")
+        if (member) {
+            if (!reason) {
+                return member.addRole(mute).then(member => {
+                    message.channel.send(`${member.user.tag} was muted by ${message.author}, no reason was provided`)
+
+                })
+
+            }
+            if (reason) {
+                member.addRole(mute).then(member => {
+                    message.channel.send(`${member.user.tag} was muted by ${message.author} for ${reason}`).catch(error => {
+                        message.channel.send(":no_entry: Cannot mute this user")
+                    })
+                })
+            }
+        }
+
+    }
+
+    if (command === "unmute") {
+        if (!message.member.hasPermission('MANAGE_MESSAGES'))
+            return message.channel.send(":no_entry: Insufficient permissions")
+        const mute = message.guild.roles.find(r => r.name === "Muted");
+        if (!mute)
+            return message.channel.send(":no_entry: No mute role")
+        const member = message.mentions.members.first();
+        if (!member)
+            return message.channel.send(":no_entry: No user mentioned")
+        if (!member.roles.some(r => ["Muted"].includes(r.name)))
+            return message.channel.send(":no_entry: User is not muted")
+        if (member) {
+            member.removeRole(mute).then(member => {
+                message.channel.send(`${member.user.tag} was unmuted by ${message.author}`)
+
+            })
+        }
+    }
     if (command === "add") {
         if (!message.member.hasPermission("MANAGE_ROLES"))
             return message.channel.send(":no_entry: Insufficient permissions")
@@ -129,14 +203,16 @@ bot.on("message", message => {
         }
     }
 
-    if(command === "rps"){
+    if(command === "gif"){
         const options = [
-            "rock :shell: ",
-            "paper :newspaper2:",
-            "scissors :scissors: "
+            "https://tenor.com/view/popek-vs-pudzian-gif-7344384",
+            "https://tenor.com/view/pudzian-strongman-polska-gif-18819064",
+            "https://tenor.com/view/pudzian-twojstary-jedenbrowarjest-drugimpowtorze-aletaniec-gif-15978594",
+            "https://i.makeagif.com/media/5-28-2015/Ln3XPQ.gif",
+            "https://cdn.discordapp.com/attachments/767888166828507147/769209676591136788/1Dt1aE.gif"
         ]
         const option = options[Math.floor(Math.random() * options.length)]
-        message.channel.send(`You got ${option}`)
+        message.channel.send(`${option}`)
     }
 
     if (command === "uptime") {
@@ -150,3 +226,4 @@ bot.on("message", message => {
 
     }
 });
+
