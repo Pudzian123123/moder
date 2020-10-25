@@ -8,7 +8,7 @@ bot.login(config.token)
 bot.on("ready", () => {
     console.log("Ready")
     bot.user.setStatus("online")
-    bot.user.setActivity("+help")
+    bot.user.setActivity("Wersja beta 0.3 | +help")
 });
 
 bot.on("reconnecting", () => {
